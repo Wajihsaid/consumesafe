@@ -8,6 +8,6 @@ spec:
     app: consumesafe
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 8080
+      port: 81
+      targetPort: 8081
       nodePort: 30080

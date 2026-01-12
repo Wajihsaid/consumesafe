@@ -5,9 +5,9 @@ metadata:
 data:
   application.properties: |
     spring.application.name=ConsumeSafe
-    server.port=8080
+    server.port=8081
     spring.datasource.url=jdbc:mysql://mysql:3306/consumesafe_db?createDatabaseIfNotExist=true&useSSL=false
     spring.datasource.username=root
-    spring.datasource.password=rootpassword
+    spring.datasource.password=27221488
     spring.jpa.hibernate.ddl-auto=update
     spring.jpa.show-sql=true
