@@ -11,7 +11,7 @@ pipeline {
 
     tools {
         maven 'Maven-3.9'  // Doit correspondre au nom dans Jenkins
-        jdk 'JDK-17'       // Doit correspondre au nom dans Jenkins
+        jdk 'JDK-21'       // Doit correspondre au nom dans Jenkins
     }
 
     stages {
