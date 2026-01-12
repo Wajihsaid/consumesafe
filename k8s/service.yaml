@@ -3,11 +3,10 @@ kind: Service
 metadata:
   name: consumesafe-service
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: consumesafe
   ports:
-    - protocol: TCP
-      port: 81
+    - port: 80
       targetPort: 8081
       nodePort: 30080
