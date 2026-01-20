@@ -113,33 +113,26 @@ pipeline {
         }
 
         stage('☸️ Deploy to Kubernetes') {
-            steps {
-                echo '☸️ Deploying to Kubernetes...'
-                script {
-                    // Option 1: Sans credentials explicites (si kubectl déjà configuré)
-                    sh """
-                        kubectl apply -f k8s/mysql-deployment.yaml
-                        kubectl apply -f k8s/configmap.yaml
-                        kubectl apply -f k8s/deployment.yaml
-                        kubectl apply -f k8s/service.yaml
+          steps {
+            echo '☸️ Deploying to Kubernetes...'
+            withKubeConfig([credentialsId: 'kubeconfig']) {
+              sh '''
+                kubectl version --client
+                kubectl cluster-info
+                kubectl get nodes
 
-                        # Wait for deployment
-                        kubectl rollout status deployment/consumesafe --timeout=5m
+                kubectl apply -f k8s/mysql-deployment.yaml
+                kubectl apply -f k8s/configmap.yaml
+                kubectl apply -f k8s/deployment.yaml
+                kubectl apply -f k8s/service.yaml
 
-                        # Get service info
-                        kubectl get services consumesafe-service
-                    """
-
-                    // Option 2: Avec credentials kubeconfig (décommenter si nécessaire)
-                    // withKubeConfig([credentialsId: 'kubeconfig']) {
-                    //     sh """
-                    //         kubectl apply -f k8s/
-                    //         kubectl rollout status deployment/consumesafe --timeout=5m
-                    //         kubectl get services
-                    //     """
-                    // }
-                }
+                kubectl rollout status deployment/mysql --timeout=5m || true
+                kubectl rollout status deployment/consumesafe --timeout=5m
+                kubectl get pods
+                kubectl get svc
+              '''
             }
+          }
         }
 
         stage('✅ Verify Deployment') {
