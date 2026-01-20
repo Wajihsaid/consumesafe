@@ -112,64 +112,24 @@ pipeline {
             }
         }
 
-        stage('☸️ Deploy to Kubernetes') {
+        stage('☸️ Deploy + Verify') {
           steps {
-            echo '☸️ Deploying to Kubernetes...'
             withKubeConfig([credentialsId: 'kubeconfig']) {
               sh '''
-                kubectl version --client
-                kubectl cluster-info
-                kubectl get nodes
-
                 kubectl apply -f k8s/mysql-deployment.yaml
                 kubectl apply -f k8s/configmap.yaml
                 kubectl apply -f k8s/deployment.yaml
                 kubectl apply -f k8s/service.yaml
 
-                kubectl rollout status deployment/mysql --timeout=5m || true
-                set -e
+                kubectl rollout status deployment/mysql --timeout=5m
+                kubectl rollout status deployment/consumesafe --timeout=5m
 
-                  kubectl rollout status deployment/mysql --timeout=5m
-
-                  # Try rollout for consumesafe; if it fails, print debug info
-                  if ! kubectl rollout status deployment/consumesafe --timeout=5m; then
-                    echo "==== DEBUG: consumesafe pods ===="
-                    kubectl get pods -l app=consumesafe -o wide || true
-                    echo "==== DEBUG: describes ===="
-                    kubectl describe deployment consumesafe || true
-                    kubectl describe pod -l app=consumesafe || true
-                    echo "==== DEBUG: logs ===="
-                    kubectl logs -l app=consumesafe --all-containers=true --tail=200 || true
-                    echo "==== DEBUG: events ===="
-                    kubectl get events --sort-by=.metadata.creationTimestamp | tail -n 50 || true
-                    exit 1
-                  fi
                 kubectl get pods
                 kubectl get svc
+                kubectl wait --for=condition=ready pod -l app=consumesafe --timeout=300s
               '''
             }
           }
-        }
-
-        stage('✅ Verify Deployment') {
-            steps {
-                echo '✅ Verifying deployment...'
-                script {
-                    sh """
-                        echo "=== Pods Status ==="
-                        kubectl get pods -l app=consumesafe
-
-                        echo "=== Services ==="
-                        kubectl get services
-
-                        echo "=== Deployment Status ==="
-                        kubectl get deployment consumesafe
-
-                        # Wait for pods to be ready
-                        kubectl wait --for=condition=ready pod -l app=consumesafe --timeout=300s || true
-                    """
-                }
-            }
         }
     }
 
