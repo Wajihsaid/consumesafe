@@ -127,7 +127,23 @@ pipeline {
                 kubectl apply -f k8s/service.yaml
 
                 kubectl rollout status deployment/mysql --timeout=5m || true
-                kubectl rollout status deployment/consumesafe --timeout=5m
+                set -e
+
+                  kubectl rollout status deployment/mysql --timeout=5m
+
+                  # Try rollout for consumesafe; if it fails, print debug info
+                  if ! kubectl rollout status deployment/consumesafe --timeout=5m; then
+                    echo "==== DEBUG: consumesafe pods ===="
+                    kubectl get pods -l app=consumesafe -o wide || true
+                    echo "==== DEBUG: describes ===="
+                    kubectl describe deployment consumesafe || true
+                    kubectl describe pod -l app=consumesafe || true
+                    echo "==== DEBUG: logs ===="
+                    kubectl logs -l app=consumesafe --all-containers=true --tail=200 || true
+                    echo "==== DEBUG: events ===="
+                    kubectl get events --sort-by=.metadata.creationTimestamp | tail -n 50 || true
+                    exit 1
+                  fi
                 kubectl get pods
                 kubectl get svc
               '''
